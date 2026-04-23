@@ -2,12 +2,7 @@ import type { PriceTier, Restaurant, SearchParams } from "./types";
 import { MOCK_RESTAURANTS, generateSlotsForRestaurant } from "./opentable.mock";
 import { buildBookingUrl } from "./bookingUrl";
 import { haversineMeters } from "./geo";
-import {
-  OPENTABLE_GQL_ENDPOINT,
-  OPENTABLE_QUERY,
-  buildVariables,
-  parseResponse,
-} from "./opentable.query";
+import { searchLive } from "./opentable.live";
 
 const PRICE_LABELS: Record<PriceTier, string> = {
   1: "$",
@@ -68,26 +63,6 @@ function searchMock(params: SearchParams): Restaurant[] {
   }
 
   return out;
-}
-
-async function searchLive(params: SearchParams): Promise<Restaurant[]> {
-  const variables = buildVariables(params);
-  const res = await fetch(OPENTABLE_GQL_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json",
-    },
-    body: JSON.stringify({ query: OPENTABLE_QUERY, variables }),
-  });
-  if (!res.ok) {
-    const snippet = (await res.text()).slice(0, 500);
-    throw new Error(
-      `OpenTable GQL returned ${res.status} ${res.statusText}. Response snippet: ${snippet}`,
-    );
-  }
-  const raw = await res.json();
-  return parseResponse(raw, params).filter((r) => r.slots.length > 0);
 }
 
 function extractHHmm(datetime: string): string {
